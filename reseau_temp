@@ -3,6 +3,7 @@ import pathlib
 import numpy as np
 import cv2
 from tensorflow import keras
+import tensorflow as tf
 from keras import layers, preprocessing, callbacks, losses, utils, models
 import sys
 import PyQt5
@@ -12,6 +13,15 @@ from PyQt5.QtCore import Qt
 import time
 import glob
 from collections import defaultdict
+
+
+# Détection automatique du GPU Apple (Metal)
+devices = tf.config.list_physical_devices()
+gpu_devices = [d for d in devices if d.device_type == "GPU"]
+if gpu_devices:
+    print("✅ GPU Apple détecté :", gpu_devices)
+else:
+    print("⚠️ Aucun GPU Apple détecté, utilisation du CPU.")
 
 # =========================
 # 1) Parsing des fichiers
@@ -118,7 +128,7 @@ def make_model(T, D, C):
 # =========================
 
 # Dossier où se trouvent les fichiers *.txt
-seq_folder = "/Users/valentindaveau/Documents/UE_Vision/training_set/sequences/"  # adapte si besoin
+seq_folder = "/Users/valentindaveau/Documents/UE_Vision/Coordonnees" 
 
 # Construire le dataset
 X, y, class_names = load_dataset_from_folder(seq_folder, max_len=200)
@@ -135,8 +145,21 @@ Xva, yva = X[va], y[va]
 T, D = X.shape[1], X.shape[2]
 C    = len(class_names)
 
-model = make_model(T, D, C)
-history = model.fit(Xtr, ytr, validation_data=(Xva, yva), epochs=20, batch_size=32)
+model_path = "modele_gestes.keras"
+
+if os.path.exists(model_path):
+    print("✅ Modèle trouvé, chargement du modèle sauvegardé...")
+    model = keras.models.load_model(model_path)
+    class_names = np.load("class_names.npy", allow_pickle=True).tolist()
+    print("✅ Noms de classes chargés :", class_names)
+else:
+    print("⚙️  Aucun modèle trouvé, entraînement en cours...")
+    model = make_model(T, D, C)
+    history = model.fit(Xtr, ytr, validation_data=(Xva, yva), epochs=20, batch_size=32)
+    model.save(model_path)
+    print(f"💾 Modèle sauvegardé sous : {model_path}")
+    np.save("class_names.npy", class_names)
+    print("💾 Noms de classes sauvegardés dans class_names.npy")
 
 
 
