@@ -1,5 +1,5 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
 # Indices à garder dans l’ordre de TON dataset (20 points):
 # wrist (0), thumb A(1), thumb B(2), thumb End(4),
 # index A(5), B(6), C(7), End(8),
