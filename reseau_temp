@@ -29,18 +29,27 @@ else:
 
 def load_sequence_txt(path):
     """
-    Lit un .txt où chaque ligne est une frame : "v1;v2;...;vN;"
+    Lit un .txt où chaque ligne est une frame : "v1;v2;...;vN;" ou "v1 v2 ... vN"
     -> retourne un numpy array (T, D) où T = nb de frames, D = nb de features par frame
     """
     feats = []
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
-            parts = [p for p in line.strip().split(";") if p.strip() != ""]
-            if not parts:
+            line = line.strip()
+            if not line:
                 continue
-            vec = list(map(float, parts))
+            # Détection automatique du séparateur
+            if ";" in line:
+                parts = [p for p in line.split(";") if p.strip() != ""]
+            else:
+                parts = [p for p in line.split() if p.strip() != ""]
+            try:
+                vec = list(map(float, parts))
+            except ValueError:
+                print(f"⚠️ Ligne ignorée dans {path}: {line[:50]}...")
+                continue
             feats.append(vec)
-    X = np.array(feats, dtype=np.float32)  # (T, D)
+    X = np.array(feats, dtype=np.float32)
     return X
 
 # =========================
@@ -128,7 +137,7 @@ def make_model(T, D, C):
 # =========================
 
 # Dossier où se trouvent les fichiers *.txt
-seq_folder = "/Users/valentindaveau/Documents/UE_Vision/Coordonnees" 
+seq_folder = "/Users/valentindaveau/Documents/UE_Vision/Coords" 
 
 # Construire le dataset
 X, y, class_names = load_dataset_from_folder(seq_folder, max_len=200)
